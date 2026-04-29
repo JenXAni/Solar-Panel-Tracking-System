@@ -1,0 +1,48 @@
+from machine import Pin, PWM
+import time
+
+# Servo setup (GP15)
+servo = PWM(Pin(15))
+servo.freq(50)
+
+# LDR inputs
+ldr_right = Pin(14, Pin.IN)  # Right sensor
+ldr_left = Pin(16, Pin.IN)   # Left sensor
+
+# Function to set angle
+def set_angle(angle):
+    duty = int(1638 + (angle / 180) * (8192 - 1638))
+    servo.duty_u16(duty)
+
+current_position = None
+
+# Start at center (60°)
+set_angle(60)
+current_position = "CENTER"
+
+while True:
+    right = ldr_right.value()
+    left = ldr_left.value()
+
+    # Right sensor detects light → move RIGHT
+    if right == 1 and left == 0:
+        if current_position != "RIGHT":
+            print("Moving RIGHT")
+            set_angle(100)
+            current_position = "RIGHT"
+
+    # Left sensor detects light → move LEFT
+    elif left == 1 and right == 0:
+        if current_position != "LEFT":
+            print("Moving LEFT")
+            set_angle(20)
+            current_position = "LEFT"
+
+    # Both same (no light or both detect) → go CENTER
+    else:
+        if current_position != "CENTER":
+            print("Moving CENTER")
+            set_angle(60)
+            current_position = "CENTER"
+
+    time.sleep(0.2)
